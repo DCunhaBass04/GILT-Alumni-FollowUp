@@ -1,6 +1,8 @@
 .vscode
 .idea
 
+credentials.cfg
+
 alumni\target\*
 
 target/
@@ -41,3 +43,4 @@ build/
 
 ### Mac OS ###
 .DS_Store
+src/__pycache__/*
