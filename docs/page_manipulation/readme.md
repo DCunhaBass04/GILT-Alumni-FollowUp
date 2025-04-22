@@ -8,17 +8,47 @@ Isto será feito através da lib ***Playwright*** do python.
 
 Estas funcionalidades exigem o *setup* seguinte:
 
+## Configuração de um *proxy*
+
+Para a *Virtual Machine* poder aceder a websites como o *Forms*, teremos de configurar um *proxy* da seguinte forma **(assumindo que, na VM, usamos um utilizador "root" com password "hello" com o servidor "isep.ipp.pt" na porta 8080)**:
+
+```sh
+export http_proxy="http://root:hello@proxy.isep.ipp.pt:8080"
+export https_proxy="http://root:hello@proxy.isep.ipp.pt:8080"
+```
+
+Poderá testar se este *proxy* funcionou a executar a seguinte linha:
+
+```sh
+curl -I https://forms.office.com
+```
+
+E deve receber uma resposta começada com **HTTP/1.0 200 Connection established**.
+
 ## Instalação do python
 
 ```sh
 apt install python3
+apt install python3-pip
 ```
 
-## Instalação da lib Playwright
+## Configuração de *virtual environment*
+
+Faça estes passos na base do repositório:
+
+```sh
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Isto vai fazer a máquina entrar no modo ***venv***
+
+## Instalação da lib Playwright (no modo *venv*)
 
 ```sh
 pip install playwright
 playwright install
+playwright install-deps
 ```
 
 ## Configuração do ficheiro credentials.cfg
