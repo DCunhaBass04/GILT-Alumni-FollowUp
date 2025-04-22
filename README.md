@@ -6,4 +6,4 @@ Este sistema irá tratar da comunicação com os participantes, a gestão das re
 
 As funcionalidades aqui apresentadas serão chamadas através através do *cron* duma máquina virtual **Linux**. Desta forma, as funcionalidades podem acontecer automaticamente quando pretendido, e não têm de ser ativadas manualmente.
 
-**Nota:** O **readme.md** de cada funcionaidade terá os passos necessários para a sua configuração. É importante segui-los se mudar o sistema de local.
+**Nota:** O **readme.md** de cada funcionaidade terá os passos necessários para a sua configuração. É importante segui-los se mudar o sistema de local. [Aqui está a documentação do projeto](docs/readme.md)

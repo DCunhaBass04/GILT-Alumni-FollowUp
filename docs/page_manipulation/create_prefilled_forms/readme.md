@@ -4,7 +4,7 @@ Precisaremos de criar um *script* que, dado os dados referentes a utilizadores q
 
 **Nota:** Isto é necessário fazer com um script exterior visto que o **Microsoft Forms** não fornece uma API que permita criar um link pre-preenchido automaticamente.
 
-Isto será feito pelo script [**create_prefilled_forms.py**](../../src/create_prefilled_form.py). Este script irá, para cada utilizador recorrente, utilizador **Playwright** para simular os cliques necessários para criar um link pre-preenchido e guardá-lo no mesmo ficheiro *excel* que contém a resposta.
+Isto será feito pelo script [**create_prefilled_forms.py**](../../src/create_prefilled_form.py). Este script irá, para cada utilizador recorrente, utilizar **Playwright** para simular os cliques necessários para criar um link pre-preenchido e guardá-lo no mesmo ficheiro *excel* que contém a resposta.
 
 Esta funcionalidade exige o *setup* seguinte:
 
