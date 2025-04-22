@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright
 import configparser
+from login import login
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, slow_mo=100) # headless=True quando usar na VM
@@ -16,19 +17,7 @@ with sync_playwright() as p:
     page = browser.new_page()
     page.goto(url)
 
-    page.locator('input').nth(0).wait_for(state="visible")
-    page.fill('input >> nth=0', email) 
-    page.get_by_role("button", name="Next" # ou "Seguinte" em PT
-                     ).click()
-
-    page.locator('input').nth(1).wait_for(state="visible")
-    page.fill('input >> nth=1', password)
-    page.get_by_role("button", name="Sign in" # ou "Iniciar Sessão" em PT
-                     ).click()
-
-    page.get_by_text("Yes" # ou "Sim" em PT
-                     , exact=True).nth(0).wait_for(state="visible")
-    page.get_by_text("Yes", exact=True).nth(0).click()
+    login(page, email, password)
 
     page.locator(".dropdown-placeholder-arrow").wait_for(state='visible')
     page.locator(".dropdown-placeholder-arrow").click(force=True)
