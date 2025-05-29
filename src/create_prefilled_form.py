@@ -1,6 +1,37 @@
 from playwright.sync_api import sync_playwright
 import configparser
+import pandas as pd
+import time
 from login import login
+import os
+
+def preencher_pergunta_texto(page, texto_pergunta, resposta):
+    pergunta = page.locator(f"//span[contains(text(), '{texto_pergunta}')]")
+    input_field = pergunta.locator("xpath=following::input[1] | following::textarea[1]").first
+
+    input_field.wait_for(state="visible", timeout=10000)
+    input_field.fill(resposta)
+
+def preencher_pergunta_multipla_escolha(page, texto_pergunta, resposta):
+    pergunta = page.locator(f"//span[contains(text(), '{texto_pergunta}')]")
+    opcao = pergunta.locator(f"xpath=following::label//span[contains(text(), '{resposta}')]").first
+    
+    opcao.wait_for(state="visible", timeout=10000)
+    opcao.click()
+
+def preencher_pergunta_multipla_outro(page, texto_pergunta, opcoes, resposta):
+    pergunta = page.get_by_label(texto_pergunta)
+    pergunta.scroll_into_view_if_needed()
+    pergunta.wait_for(state="visible", timeout=10000)
+
+    if resposta in opcoes:
+        pergunta.get_by_role("radio", name=resposta).click()
+    else:
+        pergunta.get_by_role("radio", name="Other answer").click()
+        input_outro = pergunta.locator("input[aria-label='Other answer'][data-automation-id='textInput']")
+        input_outro.wait_for(state="visible", timeout=10000)
+        input_outro.fill(str(resposta))
+
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, slow_mo=100) # headless=True quando usar na VM
@@ -8,7 +39,15 @@ with sync_playwright() as p:
 
     config = configparser.ConfigParser()
     config.read('conf.cfg')
-    url = config['START']['forms_admin_url']
+    url = config['START']['forms_admin_url'] + "&topview=Prefill"
+    excel_path = config['START']['excel_file_path']
+
+    dados = pd.read_excel(excel_path, 'Respostas')
+    dados = dados.loc[dados.groupby('Email Institucional')['Ano de submissão'].idxmax()]
+    matriz = dados.values.tolist()
+    colunas = dados.columns
+
+    emails_autorizados = pd.read_excel(excel_path, sheet_name='Emails_Autorizados')
 
     config.read('credentials.cfg')
     email = config['CREDENTIALS']['email']
@@ -17,36 +56,73 @@ with sync_playwright() as p:
     page = browser.new_page()
     page.goto(url)
 
-    login(page, email, password)
+    try:
 
-    page.locator(".dropdown-placeholder-arrow").wait_for(state='visible')
-    page.locator(".dropdown-placeholder-arrow").click(force=True)
-    page.locator('[aria-label="Get Pre-filled URL"]' # Ou "Obter URL Pré-preenchido" em PT
-                 ).wait_for(state="visible")
-    page.locator('[aria-label="Get Pre-filled URL"]').click()
+        login(page, email, password)
 
-    # Preencher campos
-    page.locator('input').nth(0).wait_for(state="visible")
-    page.fill('input >> nth=0', "diogo10072004@isep.ipp.pt")
-    page.fill('input >> nth=1', "Diogo Teste Playwright")
-    page.get_by_text("Sim", exact=True).nth(0).click()
+        for linha in matriz:
+            email_pessoal = linha[2] if pd.notna(linha[2]) else linha[0]
+            email_institucional = linha[1]
+            temEmprego = linha[3]
+            empresa = linha[4]
+            pais = linha[5]
+            posicao = linha[6]
+            lideranca = linha[7]
+            areaLicenc = linha[8]
+            gamaSalario = linha[9]
+            faltaEmprego = linha[10]
+            numMeses = linha[11]
+            
+            page.goto(url)
+            # Preencher campos
+            page.locator('input').nth(0).wait_for(state="visible")
+            page.fill('input >> nth=0', email_institucional[0:7])
+            page.fill('input >> nth=1', email_pessoal)
+            
+            page.get_by_text("Não", exact=True).nth(0).click()
 
+            page.get_by_text(temEmprego, exact=True).nth(1).click()
+
+            time.sleep(3)
+
+            if(temEmprego=="Sim"):
+                preencher_pergunta_texto(page, "Que empresa que o contratou?", empresa)
+                preencher_pergunta_texto(page, "Em que país é que foi contratado?", pais)
+                preencher_pergunta_texto(page, "Que posição é que ocupa nesse emprego?", posicao)
+                preencher_pergunta_multipla_escolha(page, "É uma posição de liderança", lideranca)
+                preencher_pergunta_multipla_escolha(page, "Foi na área em que se licenciou?", areaLicenc)
+                preencher_pergunta_multipla_escolha(page, "Em qual destas gamas é que o seu salário se encontra?", gamaSalario)
+            else:
+                preencher_pergunta_multipla_outro(page, "Porque é que não tem emprego?", ["Não procurei", "Procurei, mas não fui aceite"], faltaEmprego)
+
+            preencher_pergunta_multipla_outro(page, "meses que demorou", ["Ainda não tive"], numMeses)
+
+            
+            page.get_by_role("button", name="Get Prefilled Link" # ou "Obter Ligação Pré-Preenchida" em PT
+                            ).click()
+
+
+            page.get_by_role("button", name="Copy link" # ou "Copiar ligação" em PT
+                            ).wait_for(state="visible")
+            page.get_by_role("button", name="Copy link").click()
+
+            link_input = page.locator('input[readonly][value^="http"]').first
+            link_input.wait_for(state="visible")
+            link_copiado = link_input.input_value()
+
+            print("Link copiado:", link_copiado)
+            mask = emails_autorizados['Email Institucional'] == email
+            emails_autorizados.loc[mask, 'Link a enviar'] = link_copiado
+
+        with pd.ExcelWriter(excel_path, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+            emails_autorizados.to_excel(writer, sheet_name='Emails_Autorizados', index=False)
     
-    page.get_by_role("button", name="Get Prefilled Link" # ou "Obter Ligação Pré-Preenchida" em PT
-                     ).click()
+        browser.close()
 
-
-    page.get_by_role("button", name="Copy link" # ou "Copiar ligação" em PT
-                     ).wait_for(state="visible")
-    page.get_by_role("button", name="Copy link").click()
-
-    link_input = page.locator('input[readonly][value^="http"]').first
-    link_input.wait_for(state="visible")
-    link_copiado = link_input.input_value()
-
-    browser.close()
-
-    print("Link copiado:", link_copiado)
+    except Exception as e:
+        page.screenshot(path="Error.png")
+        browser.close()
+        raise
 
     # Para funcionar como suposto, teremos de usar o link do comentário 
         # Iniciar sessão com a conta que contém o forms = FEITO

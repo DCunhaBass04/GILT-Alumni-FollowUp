@@ -8,4 +8,11 @@ Isto será feito pelo script [**create_prefilled_forms.py**](../../src/create_pr
 
 Esta funcionalidade exige o *setup* seguinte:
 
-...
+## Configuração do *pandas*
+
+Na *virtual environment*, execute os seguintes comandos:
+
+```sh
+pip install pandas
+pip install openpyxl
+```
