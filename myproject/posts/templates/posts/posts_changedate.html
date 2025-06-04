@@ -1,0 +1,12 @@
+{% extends 'layout.html' %}
+
+{% block title %}Escolher Datas{% endblock %}
+
+{% block content %}
+<h1>Escolher Datas</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submeter</button>
+</form>
+{% endblock %}

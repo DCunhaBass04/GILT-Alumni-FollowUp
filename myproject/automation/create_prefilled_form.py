@@ -2,7 +2,7 @@ from playwright.sync_api import sync_playwright
 import configparser
 import pandas as pd
 import time
-from login import login
+from login import LoginMicrosoft
 import os
 
 def preencher_pergunta_texto(page, texto_pergunta, resposta):
@@ -38,7 +38,7 @@ with sync_playwright() as p:
                                                             # headless=False para demonstrar
 
     config = configparser.ConfigParser()
-    config.read('conf.cfg')
+    config.read('../conf.cfg')
     url = config['START']['forms_admin_url'] + "&topview=Prefill"
     excel_path = config['START']['excel_file_path']
 
@@ -49,7 +49,7 @@ with sync_playwright() as p:
 
     emails_autorizados = pd.read_excel(excel_path, sheet_name='Emails_Autorizados')
 
-    config.read('credentials.cfg')
+    config.read('../credentials.cfg')
     email = config['CREDENTIALS']['email']
     password = config['CREDENTIALS']['password']
 
@@ -57,8 +57,8 @@ with sync_playwright() as p:
     page.goto(url)
 
     try:
-
-        login(page, email, password)
+        login_tool = LoginMicrosoft()
+        login_tool.login(page, email, password)
 
         for linha in matriz:
             email_pessoal = linha[2] if pd.notna(linha[2]) else linha[0]

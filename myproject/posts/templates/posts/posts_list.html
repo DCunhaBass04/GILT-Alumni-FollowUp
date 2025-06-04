@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Respostas
+{% endblock %}
+
+{% block content %}
+
+<section>
+    <h1>Respostas</h1>
+    <div>
+        {{ posts|safe }}
+    </div>
+</section>
+
+{% endblock %}

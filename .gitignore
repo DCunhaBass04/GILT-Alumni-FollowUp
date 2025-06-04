@@ -44,4 +44,11 @@ build/
 
 ### Mac OS ###
 .DS_Store
-src/__pycache__/*
+
+### Django ###
+**/__pycache__/*
+**/migrations/*
+
+### Testing ###
+**/Error.png
+**/screenshot.png
