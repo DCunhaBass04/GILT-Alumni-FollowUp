@@ -5,6 +5,8 @@ import pandas as pd
 import configparser
 
 from automation.change_date import DateChanger
+from automation.toggle_forms import run as toggle_forms
+from automation.create_prefilled_form import run as create_prefilled_form
 
 from .forms import DatasForm
 from datetime import datetime, time, timezone, timedelta
@@ -51,3 +53,17 @@ def posts_changetime(request):
 def processar_datas(data_inicio, data_lembrete, data_fim):
     dateChanger = DateChanger()
     return dateChanger.run(data_inicio, data_lembrete, data_fim)
+
+@login_required(login_url="/users/login")
+def posts_escolheracao(request):
+    resultado = None
+
+    if request.method == "POST":
+        if "prefilled" in request.POST:
+            resultado = create_prefilled_form()
+        elif "abrir" in request.POST:
+            resultado = toggle_forms(True)
+        elif "fechar" in request.POST:
+            resultado = toggle_forms(False)
+
+    return render(request, 'posts/posts_acoes.html', {'resultado': resultado})

@@ -1,48 +1,62 @@
 import time
 from playwright.sync_api import sync_playwright
 import configparser
-from login import LoginMicrosoft
-import sys
+from automation.login import LoginMicrosoft
 
-if __name__ == "__main__":
-  state = sys.argv[1]   # "True" se for para abrir o Forms
-                        # "False" se for para fechar o Forms
-def toggle_forms(url, state):
+def toggle_forms(page, url, state: bool):
     page.goto(url)
-    page.locator('[aria-label="Settings"]' # Ou "Definições" em PT
-                ).wait_for(state="visible")
+    page.locator('[aria-label="Settings"]').wait_for(state="visible")
     page.locator('[aria-label="Settings"]').click()
 
     checkbox = page.get_by_role("checkbox", name="Accept responses")
     checkbox.wait_for(state="visible")
+
     if checkbox.get_attribute("aria-checked") != str(state).lower():
         checkbox.click()
 
-    time.sleep(10) # Espera necessária para o Forms armazenar a alteração
+    time.sleep(10)  # Espera necessária para o Forms armazenar a alteração
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True, slow_mo=100) # headless=True quando usar na VM
-                                                            # headless=False para demonstrar
+def run(state: bool):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True, slow_mo=100)
 
-    config = configparser.ConfigParser()
-    config.read('../conf.cfg')
-    url = config['START']['forms_admin_url']
+        config = configparser.ConfigParser()
+        config.read('../conf.cfg')
+        url1 = config['START']['forms_admin_url']
+        url2 = config['START']['first_forms_admin_url']
 
-    config.read('../credentials.cfg')
-    email = config['CREDENTIALS']['email']
-    password = config['CREDENTIALS']['password']
+        config.read('../credentials.cfg')
+        email = config['CREDENTIALS']['email']
+        password = config['CREDENTIALS']['password']
 
-    page = browser.new_page()
-    page.goto(url)
+        page = browser.new_page()
+        page.goto(url1)
 
-    try:
-        login_tool = LoginMicrosoft()
-        login_tool.login(page, email, password)
+        try:
+            login_tool = LoginMicrosoft()
+            login_tool.login(page, email, password)
 
-        toggle_forms(url, state)
-        toggle_forms(config['START']['first_forms_admin_url'], state)
+            toggle_forms(page, url1, state)
+            toggle_forms(page, url2, state)
 
-    except Exception as e:
-        page.screenshot(path="Error.png")
-        browser.close()
-        raise
+            browser.close()
+            return "Operação terminada com sucesso"
+
+        except Exception as e:
+            page.screenshot(path="Error.png")
+            browser.close()
+            return f"Erro ao executar operação: {str(e)}"
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 2:
+        print("Uso: python toggle_forms.py True|False")
+        sys.exit(1)
+
+    arg = sys.argv[1].strip().lower()
+    if arg not in ("true", "false"):
+        print("Erro: argumento deve ser 'True' ou 'False'")
+        sys.exit(1)
+
+    state_bool = arg == "true"
+    run(state_bool)

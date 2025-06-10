@@ -1,0 +1,41 @@
+{% extends 'layout.html' %}
+
+{% block title %}Ações Extra{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <h1 class="mb-4">Ações Extra</h1>
+
+  <!-- Secção: Guardar links -->
+  <div class="card mb-4 shadow-sm border-0">
+    <div class="card-body">
+      <h5 class="card-title">Criar e guardar links pré-preenchidos</h5>
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="prefilled" class="btn btn-primary">
+          Guardar links pré-preenchidos
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Secção: Abrir/Fechar -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h5 class="card-title">Abrir/Fechar Inquéritos</h5>
+      <form method="post" class="d-flex gap-2">
+        {% csrf_token %}
+        <button type="submit" name="abrir" class="btn btn-success">Abrir</button>
+        <button type="submit" name="fechar" class="btn btn-danger">Fechar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Resultado -->
+  {% if resultado %}
+    <div class="alert alert-info mt-4">
+      <strong>Resultado:</strong> {{ resultado }}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
