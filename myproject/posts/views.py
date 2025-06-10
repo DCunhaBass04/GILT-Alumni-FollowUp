@@ -7,7 +7,7 @@ import configparser
 from automation.change_date import DateChanger
 
 from .forms import DatasForm
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timezone, timedelta
 # Create your views here.
 
 
@@ -34,10 +34,11 @@ def posts_changetime(request):
 
         # Formato: "YYYY-MM-DDTHH:MM:SS.000Z"
         iso_inicio = dt_inicio.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        iso_lembrete = (dt_fim - timedelta(days=3)).strftime('%Y-%m-%dT%H:%M:%S.000Z')
         iso_fim = dt_fim.strftime('%Y-%m-%dT%H:%M:%S.000Z')
 
         # Aqui podes chamar o método externo
-        resultado = processar_datas(iso_inicio, iso_fim)
+        resultado = processar_datas(iso_inicio, iso_lembrete, iso_fim)
 
         return render(request, 'posts/posts_changesaccepted.html', {
             'inicio': iso_inicio,
@@ -47,9 +48,6 @@ def posts_changetime(request):
     return render(request, 'posts/posts_changedate.html', {'form': form})
 
 # Exemplo de método externo
-def processar_datas(data_inicio, data_fim):
-    print("Test1")
+def processar_datas(data_inicio, data_lembrete, data_fim):
     dateChanger = DateChanger()
-    print("Test2")
-    print(dateChanger.run(data_inicio))
-    return "Processado com sucesso"
+    return dateChanger.run(data_inicio, data_lembrete, data_fim)

@@ -48,7 +48,11 @@ build/
 ### Django ###
 **/__pycache__/*
 **/migrations/*
+**/secret_key.txt
 
 ### Testing ###
 **/Error.png
 **/screenshot.png
+
+### Draw.io ###
+**/*.drawio.bkp

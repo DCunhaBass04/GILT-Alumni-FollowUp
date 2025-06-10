@@ -12,25 +12,41 @@ class DateChanger:
         self.password = config['CREDENTIALS']['password']
 
         config.read('../conf.cfg')
-        self.url = config['AUTOMATE']['convite_url']
+        self.url_convite = config['AUTOMATE']['convite_url']
+        self.url_lembrete = config['AUTOMATE']['lembrete_url']
+        self.url_fim = config['AUTOMATE']['fim_url']
 
-    def run(self, iso_date):
+    def run(self, iso_date_beginning, iso_date_reminder, iso_date_end):
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, slow_mo=100)
             page = browser.new_page()
-            print(self.url)
-            page.goto(self.url)
+            page.goto(self.url_convite)
 
             try:
                 login_tool = LoginMicrosoft()
                 login_tool.login(page, self.email, self.password)
-                self.change_date_recurrence(page, self.url, iso_date)
+
+                self.change_date_recurrence(page, self.url_convite, iso_date_beginning)
+                browser.close()
+                browser = p.chromium.launch(headless=True, slow_mo=100)
+                page = browser.new_page()
+                page.goto(self.url_lembrete)     
+                login_tool.login(page, self.email, self.password)           
+                self.change_date_recurrence(page, self.url_lembrete, iso_date_reminder)
+                browser.close()
+                browser = p.chromium.launch(headless=True, slow_mo=100)
+                page = browser.new_page()
+                page.goto(self.url_fim)     
+                login_tool.login(page, self.email, self.password)
+                self.change_date_recurrence(page, self.url_fim, iso_date_end)
+
                 page.screenshot(path="screenshot.png")
                 browser.close()
                 return "Data alterada com sucesso."
 
             except Exception as e:
                 page.screenshot(path="Error.png")
+                print(e)
                 browser.close()
                 return f"Erro ao alterar data: {str(e)}"
 
@@ -48,5 +64,5 @@ class DateChanger:
         campo.wait_for(state="visible", timeout=10000)
         campo.fill(date)
 
-        page.get_by_role("button", name="Guardar").click()
-        time.sleep(5)
+        page.eval_on_selector('button[data-automation-id="action_save"]', 'el => el.click()')
+        time.sleep(10)
