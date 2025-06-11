@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 #from .models import Post
 from django.contrib.auth.decorators import login_required
 import pandas as pd
-import configparser
+from django.conf import settings
 
 from automation.change_date import DateChanger
 from automation.toggle_forms import run as toggle_forms
@@ -15,9 +15,7 @@ from datetime import datetime, time, timezone, timedelta
 
 @login_required(login_url="/users/login/")
 def posts_list(request):
-    config = configparser.ConfigParser()
-    config.read('..\conf.cfg')
-    url = config['START']['excel_file_path']
+    url = settings.EXCEL_PATH
     posts = pd.read_excel(url, "Respostas")
     return render(request, 'posts/posts_list.html', {
         'posts': posts.to_html(classes='styled-table', header="true")

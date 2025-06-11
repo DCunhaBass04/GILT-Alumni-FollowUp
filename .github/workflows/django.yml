@@ -26,8 +26,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Create secret_key.txt
-      run: echo "${{ secrets.DJANGO_SECRET_KEY }}" > myproject/secret_key.txt
+      run: echo "${{ secrets.DJANGO_SECRET_KEY }}" > GILTAdminApp/secret_key.txt
     - name: Run Tests
       run: |
-        cd myproject
+        cd GILTAdminApp
         python manage.py test

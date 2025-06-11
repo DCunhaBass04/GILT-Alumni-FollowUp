@@ -3,6 +3,21 @@ import configparser
 import pandas as pd
 import time
 from automation.login import LoginMicrosoft
+import os
+
+def get_settings():
+    try:
+        from django.conf import settings
+        _ = settings.CONFIG_PATH
+        return settings
+    except Exception:
+        class SimpleSettings:
+            CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../conf.cfg'))
+            CREDENTIALS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../credentials.cfg'))
+            EXCEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../TeamsDrive/Respostas.xlsx'))
+        return SimpleSettings()
+
+settings = get_settings()
 
 def preencher_pergunta_texto(page, texto_pergunta, resposta):
     pergunta = page.locator(f"//span[contains(text(), '{texto_pergunta}')]")
@@ -38,9 +53,9 @@ def run():
                                                                 # headless=False para demonstrar
 
         config = configparser.ConfigParser()
-        config.read('../conf.cfg')
+        config.read(settings.CONFIG_PATH)
         url = config['START']['forms_admin_url'] + "&topview=Prefill"
-        excel_path = config['START']['excel_file_path']
+        excel_path = settings.EXCEL_PATH
 
         dados = pd.read_excel(excel_path, 'Respostas')
         dados = dados.loc[dados.groupby('Email Institucional')['Ano de submissão'].idxmax()]
@@ -48,7 +63,7 @@ def run():
 
         emails_autorizados = pd.read_excel(excel_path, sheet_name='Emails_Autorizados')
 
-        config.read('../credentials.cfg')
+        config.read(settings.CREDENTIALS_PATH)
         email = config['CREDENTIALS']['email']
         password = config['CREDENTIALS']['password']
 
@@ -113,8 +128,23 @@ def run():
                 mask = emails_autorizados['Email Institucional'] == email
                 emails_autorizados.loc[mask, 'Link a enviar'] = link_copiado
 
-            with pd.ExcelWriter(excel_path, engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
-                emails_autorizados.to_excel(writer, sheet_name='Emails_Autorizados', index=False)
+            from openpyxl import load_workbook
+            from openpyxl.utils.dataframe import dataframe_to_rows
+
+            wb = load_workbook(excel_path)
+            if 'Emails_Autorizados' in wb.sheetnames:
+                ws = wb['Emails_Autorizados']
+                ws.delete_rows(2, ws.max_row)  # Preserva a primeira linha (cabeçalhos)
+
+                for r_idx, row in enumerate(dataframe_to_rows(emails_autorizados, index=False, header=False), start=2):
+                    for c_idx, value in enumerate(row, start=1):
+                        ws.cell(row=r_idx, column=c_idx, value=value)
+            else:
+                ws = wb.create_sheet('Emails_Autorizados')
+                for row in dataframe_to_rows(emails_autorizados, index=False, header=True):
+                    ws.append(row)
+
+            wb.save(excel_path)
         
             browser.close()
             return "Operação terminada com sucesso"

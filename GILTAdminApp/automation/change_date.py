@@ -3,15 +3,31 @@ import configparser
 import time
 
 from automation.login import LoginMicrosoft
+import os
+from automation.change_crontab_date import update_crontab_date
+
+def get_settings():
+    try:
+        from django.conf import settings
+        _ = settings.CONFIG_PATH
+        return settings
+    except Exception:
+        class SimpleSettings:
+            CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../conf.cfg'))
+            CREDENTIALS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../credentials.cfg'))
+            EXCEL_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../TeamsDrive/Respostas.xlsx'))
+        return SimpleSettings()
+
+settings = get_settings()
 
 class DateChanger:
     def __init__(self):
         config = configparser.ConfigParser()
-        config.read('../credentials.cfg')
+        config.read(settings.CREDENTIALS_PATH)
         self.email = config['CREDENTIALS']['email']
         self.password = config['CREDENTIALS']['password']
 
-        config.read('../conf.cfg')
+        config.read(settings.CONFIG_PATH)
         self.url_convite = config['AUTOMATE']['convite_url']
         self.url_lembrete = config['AUTOMATE']['lembrete_url']
         self.url_fim = config['AUTOMATE']['fim_url']
@@ -42,6 +58,11 @@ class DateChanger:
                 self.change_date_recurrence(page, iso_date_end)
 
                 browser.close()
+
+                update_crontab_date(iso_date_beginning, "toggle_forms True")
+                update_crontab_date(iso_date_end, "toggle_forms False")
+                update_crontab_date(iso_date_end, "create_prefilled_form")
+
                 return "Data alterada com sucesso."
 
             except Exception as e:
